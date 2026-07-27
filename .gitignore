@@ -1,0 +1,5 @@
+SW/eval/fpmult_e8m23_cmp_hw_impl
+SW/eval/report_error_metrics
+SW/py/build/
+SW/py/__pycache__/
+SW/py/fpmult_py.cpython-312-x86_64-linux-gnu.so
