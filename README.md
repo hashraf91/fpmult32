@@ -533,6 +533,29 @@ Each report directory contains files such as:
 - `post_impl_drc.rpt`
 - `post_impl_clock_utilization.rpt`
 
+## 1.12 Summarizing Vivado Reports
+
+`HW/scripts/extract_metrics.py` summarizes the report directories written
+by `run_synth_one.tcl`:
+
+```bash
+python3 HW/scripts/extract_metrics.py reports --csv reports_summary.csv
+```
+
+For every `timing_*` directory it prints the post-route LUTs, CARRY8
+blocks and CLBs, the critical-path delay (data-path delay of the worst
+register-to-register path), WNS, `Fmax = 1/(T - WNS)` (T = 5 ns virtual
+clock, `--period` to change), the dynamic power of the combinational
+datapath at 200 MHz and the power-delay product (PDP = power x CPD, pJ).
+
+The power is read from `post_impl_power.xpe` (vectorless activity). It is
+the sum of the unclocked and high-fanout-net logic power of the `inst0`
+hierarchy and excludes static power, the clock tree, I/O and the
+registers of the timing wrapper. All designs use the same wrapper, the
+same constraint (`HW/constraints.xdc`) and the same flow. The results in
+the paper were obtained with Vivado 2022.2 for the device
+`xczu7ev-ffvc1156-2-e`.
+
 ---
 
 # 2. Software Side
