@@ -862,17 +862,17 @@ does the following:
 - `ssm_m18c`
 
 ### Applications
-- `gaussian5`
+- `sharpen5`
 - `laplacian3`
 - `sharpen3`
 - `sobel`
 - `tone_map`
-- `gaussian5_repeat_5`
-- `gaussian5_repeat_10`
+- `sharpen5_repeat_5`
+- `sharpen5_repeat_10`
 - `unsharp_alpha_1.0`
 - `unsharp_alpha_1.5`
-- `dog_1_2`
-- `dog_1_3`
+- `sharpen5_diff_1_2`
+- `sharpen5_diff_1_3`
 
 ### Run it
 From `SW/`:

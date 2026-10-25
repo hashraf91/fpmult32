@@ -51,31 +51,31 @@ IMAGE_DISPLAY_NAMES = {
 }
 
 APPLICATION_DISPLAY_NAMES = {
-    "gaussian5": "Gaussian Filter",
+    "sharpen5": "5x5 Sharpening Filter",
     "laplacian3": "Laplacian Filter",
     "sharpen3": "Sharpening Filter",
     "sobel": "Sobel Edge Detection",
     "tone_map": "Tone Mapping",
-    "gaussian5_repeat_5": "Repeated Gaussian (5 Iterations)",
-    "gaussian5_repeat_10": "Repeated Gaussian (10 Iterations)",
+    "sharpen5_repeat_5": "Repeated 5x5 Sharpening (5 Iterations)",
+    "sharpen5_repeat_10": "Repeated 5x5 Sharpening (10 Iterations)",
     "unsharp_alpha_1.0": "Unsharp Mask (alpha = 1.0)",
     "unsharp_alpha_1.5": "Unsharp Mask (alpha = 1.5)",
-    "dog_1_2": "Difference of Gaussians (1, 2)",
-    "dog_1_3": "Difference of Gaussians (1, 3)",
+    "sharpen5_diff_1_2": "5x5 Sharpening Difference (1, 2)",
+    "sharpen5_diff_1_3": "5x5 Sharpening Difference (1, 3)",
 }
 
 APPLICATION_ORDER = [
-    "gaussian5",
+    "sharpen5",
     "laplacian3",
     "sharpen3",
     "sobel",
     "tone_map",
-    "gaussian5_repeat_5",
-    "gaussian5_repeat_10",
+    "sharpen5_repeat_5",
+    "sharpen5_repeat_10",
     "unsharp_alpha_1.0",
     "unsharp_alpha_1.5",
-    "dog_1_2",
-    "dog_1_3",
+    "sharpen5_diff_1_2",
+    "sharpen5_diff_1_3",
 ]
 
 

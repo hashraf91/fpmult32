@@ -34,7 +34,7 @@ ALL_MODELS = [
 REFERENCE_MODEL = "viv_acc"
 
 GROUP1_APPLICATIONS = [
-    "gaussian5",
+    "sharpen5",
     "laplacian3",
     "sharpen3",
     "sobel",
@@ -42,12 +42,12 @@ GROUP1_APPLICATIONS = [
 ]
 
 GROUP2_APPLICATIONS = [
-    "gaussian5_repeat_5",
-    "gaussian5_repeat_10",
+    "sharpen5_repeat_5",
+    "sharpen5_repeat_10",
     "unsharp_alpha_1.0",
     "unsharp_alpha_1.5",
-    "dog_1_2",
-    "dog_1_3",
+    "sharpen5_diff_1_2",
+    "sharpen5_diff_1_3",
 ]
 
 ALL_APPLICATIONS = GROUP1_APPLICATIONS + GROUP2_APPLICATIONS
@@ -202,7 +202,12 @@ def ssim_image(ref: np.ndarray, test: np.ndarray, data_range: float = 1.0) -> fl
     return float(np.mean(np.clip(np.asarray(vals, dtype=np.float64), 0.0, 1.0)))
 
 
-def gaussian5_kernel() -> np.ndarray:
+def sharpen5_kernel() -> np.ndarray:
+    """5x5 sharpening kernel K = 2*delta - G.
+
+    G is the normalized 5x5 binomial Gaussian, so K has unit DC gain, a centre
+    weight of 476/256 and negative outer weights (it is not a smoothing filter).
+    """
     return ((1.0 / 256.0) * np.array([
         [-1, -4, -6, -4, -1],
         [-4, -16, -24, -16, -4],
@@ -257,9 +262,9 @@ def sobel_edge_image(img: np.ndarray, model: str = None) -> np.ndarray:
     return sanitize_image(safe_square_sum_sqrt(gx, gy))
 
 
-def repeated_gaussian(img: np.ndarray, repeats: int, model: str = None) -> np.ndarray:
+def repeated_sharpen5(img: np.ndarray, repeats: int, model: str = None) -> np.ndarray:
     out = sanitize_image(img)
-    k = gaussian5_kernel()
+    k = sharpen5_kernel()
     for _ in range(repeats):
         out = filter_image(out, k, model=model)
     return sanitize_image(out)
@@ -267,12 +272,12 @@ def repeated_gaussian(img: np.ndarray, repeats: int, model: str = None) -> np.nd
 
 def unsharp_mask(img: np.ndarray, alpha: float, model: str = None) -> np.ndarray:
     img = sanitize_image(img)
-    blur = filter_image(img, gaussian5_kernel(), model=model)
+    blur = filter_image(img, sharpen5_kernel(), model=model)
     return sanitize_image(img + alpha * (img - blur))
 
 
-def difference_of_gaussians(img: np.ndarray, r1: int, r2: int, model: str = None) -> np.ndarray:
-    return sanitize_image(repeated_gaussian(img, r1, model=model) - repeated_gaussian(img, r2, model=model))
+def difference_of_sharpen5(img: np.ndarray, r1: int, r2: int, model: str = None) -> np.ndarray:
+    return sanitize_image(repeated_sharpen5(img, r1, model=model) - repeated_sharpen5(img, r2, model=model))
 
 
 def tone_map_hdr(img: np.ndarray, model: str = None, eps: float = 1e-6) -> np.ndarray:
@@ -378,8 +383,8 @@ def compute_metrics(ref_raw: np.ndarray, test_raw: np.ndarray) -> dict:
 
 
 def run_application(img: np.ndarray, application: str, model: str = None) -> np.ndarray:
-    if application == "gaussian5":
-        return filter_image(img, gaussian5_kernel(), model=model)
+    if application == "sharpen5":
+        return filter_image(img, sharpen5_kernel(), model=model)
     if application == "laplacian3":
         return filter_image(img, laplacian3_kernel(), model=model)
     if application == "sharpen3":
@@ -388,18 +393,18 @@ def run_application(img: np.ndarray, application: str, model: str = None) -> np.
         return sobel_edge_image(img, model=model)
     if application == "tone_map":
         return tone_map_hdr(img, model=model)
-    if application == "gaussian5_repeat_5":
-        return repeated_gaussian(img, repeats=5, model=model)
-    if application == "gaussian5_repeat_10":
-        return repeated_gaussian(img, repeats=10, model=model)
+    if application == "sharpen5_repeat_5":
+        return repeated_sharpen5(img, repeats=5, model=model)
+    if application == "sharpen5_repeat_10":
+        return repeated_sharpen5(img, repeats=10, model=model)
     if application == "unsharp_alpha_1.0":
         return unsharp_mask(img, alpha=1.0, model=model)
     if application == "unsharp_alpha_1.5":
         return unsharp_mask(img, alpha=1.5, model=model)
-    if application == "dog_1_2":
-        return difference_of_gaussians(img, r1=1, r2=2, model=model)
-    if application == "dog_1_3":
-        return difference_of_gaussians(img, r1=1, r2=3, model=model)
+    if application == "sharpen5_diff_1_2":
+        return difference_of_sharpen5(img, r1=1, r2=2, model=model)
+    if application == "sharpen5_diff_1_3":
+        return difference_of_sharpen5(img, r1=1, r2=3, model=model)
     raise ValueError(f"Unknown application: {application}")
 
 
