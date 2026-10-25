@@ -291,16 +291,33 @@ static void runIntegerChunk(uint64_t start_a, uint64_t end_a,
   g_processed_count.fetch_add(local_processed, std::memory_order_relaxed);
 }
 
-static void runFp32Chunk(uint64_t count, const ModelInfo &model) {
-  thread_local std::mt19937 rng(12345U ^ (uint32_t)std::hash<std::thread::id>{}(std::this_thread::get_id()));
+// FP32 error evaluation uses normalized operands only: random sign, biased
+// exponent in [1,254] and random fraction. Pairs whose exact product exponent
+// leaves [2,253] are rejected, so no NaN, Inf, zero, subnormal, overflow or
+// underflow case is evaluated. Every chunk has its own fixed seed, hence the
+// result does not depend on the number of threads or on their scheduling.
+static uint32_t random_normalized_fp32(std::mt19937_64 &rng) {
+  const uint64_t r = rng();
+  return ((uint32_t)(r & 1U) << 31) |
+         ((1U + (uint32_t)((r >> 1) % 254U)) << 23) |
+         (uint32_t)((r >> 9) & 0x7FFFFFU);
+}
 
-  for (uint64_t i = 0; i < count; ++i) {
-    uint32_t a = random_u32(rng);
-    uint32_t b = random_u32(rng);
+static void runFp32Chunk(uint64_t count, uint64_t chunk_id, const ModelInfo &model) {
+  std::mt19937_64 rng(0x5EED0000ULL + chunk_id);
+  uint64_t accepted = 0;
 
-    uint32_t exact = fpmult_e8m23_viv_acc_u32(a, b);
-    uint32_t approx = (uint32_t)model.fn_u64(a, b);
+  while (accepted < count) {
+    const uint32_t a = random_normalized_fp32(rng);
+    const uint32_t b = random_normalized_fp32(rng);
+
+    const uint32_t exact = fpmult_e8m23_viv_acc_u32(a, b);
+    const uint32_t exact_exp = (exact >> 23) & 0xFFU;
+    if (exact_exp < 2U || exact_exp > 253U) continue;
+
+    const uint32_t approx = (uint32_t)model.fn_u64(a, b);
     accumulateMetrics(exact, approx);
+    accepted++;
   }
 
   g_processed_count.fetch_add(count, std::memory_order_relaxed);
@@ -364,7 +381,7 @@ int main(int argc, char *argv[]) {
     time(&start);
 
     if (model.domain == Domain::FP32) {
-      const uint64_t total_samples = 1ULL << 24;
+      const uint64_t total_samples = 1ULL << 26;
       const uint64_t chunk_size = 1ULL << 20;
       total_count = total_samples;
 
@@ -378,8 +395,9 @@ int main(int argc, char *argv[]) {
           threadsCount++;
         }
 
-        std::thread([this_chunk, &model, &threadsMtx, &threadsCount, &threadsCv]() {
-          runFp32Chunk(this_chunk, model);
+        const uint64_t chunk_id = done / chunk_size;
+        std::thread([this_chunk, chunk_id, &model, &threadsMtx, &threadsCount, &threadsCv]() {
+          runFp32Chunk(this_chunk, chunk_id, model);
           {
             std::lock_guard<std::mutex> lk(threadsMtx);
             threadsCount--;

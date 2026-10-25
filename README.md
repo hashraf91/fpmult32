@@ -755,6 +755,16 @@ make clean-all
 ### `report_error_metrics`
 Computes error metrics directly from software models.
 
+In `fp32` mode the tool evaluates 2^26 random normalized operand pairs
+(random sign, biased exponent in [1,254], random fraction). Pairs whose
+exact product exponent is outside [2,253] are rejected, so NaN, Inf, zero,
+subnormal, overflow and underflow cases are not evaluated. Every chunk uses
+a fixed seed, so results are reproducible and independent of the thread
+count. The reference is `fpmult_e8m23_viv_acc` (round-to-nearest-even).
+Error distances (ED) are integer distances between IEEE-754 bit patterns,
+i.e. ULPs; MRED is the mean of ED divided by the exact bit pattern and NMED
+is MED/MaxED.
+
 Build:
 ```bash
 cd SW/eval
